@@ -9,6 +9,7 @@ dofile"config.lua"
 print(lat)
 print(nodeid)
 
+nextreboot = 99999
 
 -- configure UART port 2 of ESP32 for 9600, 8N1, with echo,
 -- to communicate with the Freifunk-Open-MPPT-Solarcontroller
@@ -399,7 +400,7 @@ print("we are at create pagestring", counter_serial_loop)
         pagestring = pagestring .. "</h3>"
        --<h2>" .. ffopenmppt_log .. "<h2>"
        
-  --     print(pagestring)
+print(pagestring)
 
        end
        
