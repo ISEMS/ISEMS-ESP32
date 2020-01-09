@@ -362,11 +362,7 @@ print("#########################################################################
 
         if V_in < V_out and V_out < 12.60 then charge_state = (10 + ((V_out - 11.6) * 85)) end
         
-              
-print("#####################################################################")
-print("Charge state at no solar input:", charge_state)
-print("#####################################################################")
-
+ 
 
         -- Estimate while charging without measuring current – tricky!
 
@@ -375,19 +371,12 @@ print("#####################################################################")
 
         if V_out >= (V_out_max_temp - 0.05) then charge_state = (((V_out - 12.0) / ((V_out_max_temp - 12.0) /100)) * (V_in / (V_oc - 0.5) )) end
 
-print("#####################################################################")
-print("Charge state at block 2:", charge_state)
-print("#####################################################################")
        
                     
         -- Detect and handle very low charge current
         -- At very low charge current, the V_oc versus V_mpp ratio is smaller than the MPP controller calculates.
 
         if V_out < (V_out_max_temp - 0.05) and V_in > V_out and 1.22 > (V_oc / V_in) and V_out > 12.6 then charge_state = (85 + ((V_out - 12.6) * 30)) end
-        
-print("#####################################################################")
-print("Charge state at block 3:", charge_state)
-print("#####################################################################")
        
                     
         -- Detect and handle considerable charge current
@@ -398,20 +387,12 @@ print("#####################################################################")
        
 if  charge_state_float == nil then charge_state_float = charge_state end
 
-print("#####################################################################")
-print("Charge state at block 4:", charge_state, "charge_state_float:", charge_state_float)
-print("#####################################################################")
-       
     
 --[[ Handle the corner case when the router has spent time running without serial data from the controller.
 -- Kickstart from charge state estimate, as soon as the controller is connected again.]]
 
 if (charge_state_float < (charge_state - 30)) then charge_state_float = charge_state
 end 
-
-print("#####################################################################")
-print("Charge state at block 5:", charge_state, "charge_state_float:", charge_state_float)
-print("#####################################################################")
        
 
 -- Sanity check of battery level gauge: Move slowly
@@ -425,10 +406,6 @@ charge_state_float = charge_state
 charge_state_int = math.ceil(charge_state)
 
 
-print("#####################################################################")
-print("Charge state at block 6:", charge_state, "charge_state_float:", charge_state_float,"charge_state_int:", charge_state_int)
-print("#####################################################################")
-
 
 -- if V_out >= (V_out_max_temp - 0.05) and V_in >= (V_oc * 0.95) and V_in > 16.00 then charge_status = "Fully charged" Bit_2 = 1 end
 
@@ -438,11 +415,7 @@ if charge_state_int == 100 then charge_status = "Fully charged" Bit_2 = 1 Bit_0 
 
 if charge_state_int < 0 then charge_state_int = 0 end
 
-print("#####################################################################")
-print("Charge state at block 6:", charge_state, "charge_state_float:", charge_state_float,"charge_state_int:", charge_state_int)
-print("#####################################################################")
 
-       
        
 -- Battery health estimate calculation
                     
@@ -560,14 +533,6 @@ if ffopenmppt_log5 ~= nil then
        
         end
         
-
---print(ffopenmppt_log)
-       
-print("we successfully finished CSV data set create ", counter_serial_loop)
-       
-
-print("we are at create pagestring", counter_serial_loop)
-
         pagestring = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Independent Solar Energy Mesh</h1><br><h2>Status of " .. nodeid
         pagestring = pagestring  .. " (local node)</h2><br><br>Summary: " .. charge_status  .. ". " .. system_status
         pagestring = pagestring  .. "<br>Charge state: " 
