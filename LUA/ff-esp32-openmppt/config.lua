@@ -9,7 +9,7 @@ lat = 52.520008
 long = 13.404954
 
 -- Node-ID
-nodeid = "ESP32-Meshnode-1"
+nodeid="ESP32-Meshnode-1"
 
 -- Rated capacity of battery in Ampere hours (Ah)
 rated_batt_capacity = 8.0
@@ -27,7 +27,18 @@ ap_ip="192.168.10.10"
 ap_netmask="255.255.255.0"
 
 -- Internet gateway IP
-ap_gateway="192.168.10.1"
+--ap_gateway="10.36.158.33"
+ap_gateway="192.168.10.10"
+
+-- Accesspoint WiFi channel
+ap_channel="1"
+
+-- WiFi mode 
+-- One of: 1 = STATION, 2 = SOFTAP, 3 = STATIONAP, 4 = NULLMODE
+
+wlanmode = 2
+
+latlong = 3.00
 
 -- DNS server IP
 ap_dns="8.8.8.8"
