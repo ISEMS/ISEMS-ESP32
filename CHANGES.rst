@@ -3,6 +3,11 @@ ISEMS-ESP32 changelog
 #####################
 
 
+Development
+===========
+- Add dry-dock environment.
+
+
 2020-01-09 0.0.0
 ================
 - Add the full set of LUA files to run the new hardware board.
