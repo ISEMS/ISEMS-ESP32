@@ -6,6 +6,7 @@ ISEMS-ESP32 changelog
 Development
 ===========
 - Add dry-dock environment.
+- Add MQTT- and HTTP-based telemetry with JSON encoding.
 
 
 2020-01-09 0.0.0

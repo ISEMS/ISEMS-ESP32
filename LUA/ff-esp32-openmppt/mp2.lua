@@ -501,7 +501,7 @@ statuscode = (bin2hextable[bit_string_0] .. bin2hextable[bit_string_1] .. bin2he
 print("statuscode =", statuscode)
 
 
--- Create CSV data set
+-- CSV payload
 
 timestamp = time.get()
 
@@ -511,7 +511,7 @@ print(nodeid, packetrev, timestamp, firmware_type, nextreboot, powersave, V_oc, 
       
 ffopenmppt_log = nodeid .. ";" .. packetrev .. ";" .. timestamp .. ";" .. firmware_type .. ";" .. nextreboot .. ";" .. powersave .. ";".. V_oc .. ";".. V_in .. ";".. V_out .. ";".. charge_state_int .. ";" .. health_estimate .. ";".. battery_temperature .. ";".. low_voltage_disconnect .. ";".. V_out_max_temp .. ";" .. rated_batt_capacity .. ";".. solar_module_capacity .. ";".. lat .. ";" .. long .. ";" ..  statuscode
 
-print(ffopenmppt_log)
+print("CSV payload:", ffopenmppt_log)
        
 if ffopenmppt_log5 ~= nil then 
        ffopenmppt_log1 = ffopenmppt_log2
@@ -531,8 +531,12 @@ if ffopenmppt_log5 ~= nil then
        
        elseif ffopenmppt_log1 == nil then ffopenmppt_log1 = ffopenmppt_log csvlog = ffopenmppt_log1
        
-        end
-        
+end
+
+-- HTTP- and MQTT telemetry
+dofile "telemetry.lua"
+
+-- HTML output
         pagestring = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Independent Solar Energy Mesh</h1><br><h2>Status of " .. nodeid
         pagestring = pagestring  .. " (local node)</h2><br><br>Summary: " .. charge_status  .. ". " .. system_status
         pagestring = pagestring  .. "<br>Charge state: " 
