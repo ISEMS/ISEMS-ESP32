@@ -2,6 +2,10 @@
 Mock the API of a NodeMCU device.
 ]]
 
+
+--[[
+Mocks for NodeMCU core modules.
+]]
 time = {
     get = function()
         return os.time()
@@ -38,3 +42,23 @@ adc = {
     setwidth = function() end,
     read = function() return 42.42 end,
 }
+
+
+--[[
+Requires nodemcu-lua-mocks to be installed for JSON support.
+https://github.com/fikin/nodemcu-lua-mocks
+]]
+
+local sjson = require("sjson")
+sjson.encode = function(data)
+    encoder = sjson.encoder(data)
+    return encoder:read(8192)
+end
+
+
+--[[
+TODO: Add mocks for mqtt and http modules.
+Currently, "test/run_basic" will croak with::
+
+    lua: telemetry.lua:59: attempt to index a nil value (global 'mqtt')
+]]

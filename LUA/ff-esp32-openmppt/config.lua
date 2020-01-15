@@ -10,6 +10,9 @@ long = 13.404954
 
 -- Node-ID
 nodeid="ESP32-Meshnode-1"
+-- The telemetry channel to send metrics to.
+-- See also MQTT and HTTP configuration below.
+telemetry_channel = "isems/testdrive/foobar/" .. nodeid
 
 -- Rated capacity of battery in Ampere hours (Ah)
 rated_batt_capacity = 8.0
@@ -54,3 +57,12 @@ sta_ssid="AP2.freifunk.net"
 
 -- WPA key to connect to the existing AP as WiFi client
 sta_pwd=""
+
+
+-- Telemetry configuration for MQTT and HTTP
+mqtt_enabled = false
+mqtt_broker = "isems.mqtthub.net"
+mqtt_topic = telemetry_channel
+
+http_enabled = false
+http_endpoint = "http://isems.mqtthub.net/api-notls/" .. telemetry_channel .. "/data.json"
