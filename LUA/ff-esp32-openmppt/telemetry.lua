@@ -91,24 +91,30 @@ function http_post(data)
         return
     end
 
-    -- https://nodemcu.readthedocs.io/en/master/modules/http/
-    http.post(http_endpoint,
-      'Content-Type: application/json\r\n',
-      json,
-      function(code, data)
-        if (code < 0) then
-          print("HTTP request failed", code, data)
-        else
-          print("HTTP request succeeded", code, data)
-        end
-      end)
+-- https://nodemcu.readthedocs.io/en/dev-esp32/modules/http/
+ 
+headers = {
+  ["Content-Type:"] = "application/json\r\n",
+}
+body = json
+http.post(http_endpoint, { headers = headers }, body,
+  function(code, data)
+    if (code < 0) then
+      print("HTTP request failed")
+    else
+      print(code, data)
+    end
+  end)
 
 end
 
+
 if mqtt_enabled == true then
+    print("Preparing mqtt data.")
     mqtt_publish(get_telemetry_data())
 end
 
 if http_enabled == true then
+    print("Http post mqtt data.")
     http_post(get_telemetry_data())
 end
