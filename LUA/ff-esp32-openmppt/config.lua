@@ -59,10 +59,18 @@ sta_ssid="AP2.freifunk.net"
 sta_pwd=""
 
 
--- Telemetry configuration for MQTT and HTTP
+-- Telemetry configuration for MQTT
 mqtt_enabled = false
-mqtt_broker = "isems.mqtthub.net"
+mqtt_broker_host = "isems.mqtthub.net"
+mqtt_broker_port = 1883
 mqtt_topic = telemetry_channel
 
+
+-- Telemetry configuration for HTTP
 http_enabled = false
-http_endpoint = "http://isems.mqtthub.net/api-notls/" .. telemetry_channel .. "/data.json"
+
+-- HTTPS communication (preferred)
+http_endpoint = "https://isems.mqtthub.net/api/" .. telemetry_channel .. "/data.json"
+
+-- HTTP communication (fallback)
+-- http_endpoint = "http://isems.mqtthub.net/api-notls/" .. telemetry_channel .. "/data.json"
