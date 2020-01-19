@@ -60,7 +60,9 @@ function mqtt_publish(data)
     m:connect(mqtt_broker_host, mqtt_broker_port, 0,
         function(client)
             print("Connected to MQTT broker.")
-            client:publish(mqtt_topic, "hello", 0, 0, function(client) print("MQTT message sent.") end)
+            client:publish(mqtt_topic, json, 0, 0, function(client)
+                print("MQTT message sent.")
+            end)
         end,
         function(client, reason)
             print("MQTT connect failed. Reason: " .. reason)
