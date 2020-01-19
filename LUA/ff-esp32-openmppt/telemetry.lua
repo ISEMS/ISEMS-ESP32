@@ -57,7 +57,7 @@ function mqtt_publish(data)
 
     -- https://nodemcu.readthedocs.io/en/master/modules/mqtt/
     m = mqtt.Client("isems-" .. nodeid, 120)
-    m:connect(mqtt_broker, 1883, 0,
+    m:connect(mqtt_broker_host, mqtt_broker_port, 0,
         function(client)
             print("Connected to MQTT broker.")
             client:publish(mqtt_topic, "hello", 0, 0, function(client) print("MQTT message sent.") end)
