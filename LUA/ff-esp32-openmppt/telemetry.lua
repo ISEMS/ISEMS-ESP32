@@ -10,9 +10,9 @@ function get_telemetry_data()
     Note: This might well be improved but for now it's better than nothing.
     ]]
     data = {
-        nodeId = nodeid,
-        isemsRevision = packetrev,
-        timestamp = timestamp,
+        -- nodeId = nodeid,
+        -- isemsRevision = packetrev,
+        -- timestamp = timestamp,
         timeToShutdown = nextreboot,
         isPowerSaveMode = powersave,
         openCircuitVoltage = V_oc,
