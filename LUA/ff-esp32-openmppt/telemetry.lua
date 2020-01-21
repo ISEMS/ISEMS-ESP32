@@ -4,11 +4,11 @@ Telemetry implementation for MQTT and HTTP.
 
 telemetry_channel_node = telemetry_channel .. nodeid
 
-mqtt_topic = telemetry_channel_node
+mqtt_topic = telemetry_channel_node .. "/data.json"
 
 print("mqtt_topic: ", mqtt_topic)
 
-http_endpoint = telemetry_http_endpoint .. telemetry_channel_node .. "/data.json"
+http_endpoint = telemetry_http_endpoint .. telemetry_channel_node .. "/data"
 
 print("Http telemetry url:", http_endpoint)
 
