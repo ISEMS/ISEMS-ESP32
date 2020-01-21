@@ -3,16 +3,13 @@
 -- Lines beginning with two dashes (--) are comments.
 
 -- Latitude of Geolocation
-lat = 52.520008
+lat = 52.52
 
 -- Longitude of Geolocation
-long = 13.404954
+long = 13.4
 
 -- Node-ID
 nodeid="ESP32-Meshnode-1"
--- The telemetry channel to send metrics to.
--- See also MQTT and HTTP configuration below.
-telemetry_channel = "isems/testdrive/foobar/" .. nodeid
 
 -- Rated capacity of battery in Ampere hours (Ah)
 rated_batt_capacity = 8.0
@@ -59,18 +56,22 @@ sta_ssid="AP2.freifunk.net"
 sta_pwd=""
 
 
+-- Enable (true) or disable (false) nodemcu internal debugging output.
+-- Default is (false). (true) might be very verbose and spam the LUA command line
+-- via serial port or telnet shell.
+
+node.osprint(false)
+
+-- The telemetry channel to send metrics to.
+-- See also MQTT and HTTP configuration below.
+telemetry_channel = "isems/testdrive/foobar/"
+
 -- Telemetry configuration for MQTT
 mqtt_enabled = false
 mqtt_broker_host = "isems.mqtthub.net"
 mqtt_broker_port = 1883
-mqtt_topic = telemetry_channel
 
-
--- Telemetry configuration for HTTP
+-- Telemetry configuration using HTTP
 http_enabled = false
+telemetry_http_endpoint = "https://isems.mqtthub.net/api/"
 
--- HTTPS communication (preferred)
-http_endpoint = "https://isems.mqtthub.net/api/" .. telemetry_channel .. "/data.json"
-
--- HTTP communication (fallback)
--- http_endpoint = "http://isems.mqtthub.net/api-notls/" .. telemetry_channel .. "/data.json"

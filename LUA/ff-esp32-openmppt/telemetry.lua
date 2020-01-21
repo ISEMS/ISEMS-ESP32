@@ -2,6 +2,16 @@
 Telemetry implementation for MQTT and HTTP.
 ]]
 
+telemetry_channel_node = telemetry_channel .. nodeid
+
+mqtt_topic = telemetry_channel_node
+
+print("mqtt_topic: ", mqtt_topic)
+
+http_endpoint = telemetry_http_endpoint .. telemetry_channel_node .. "/data.json"
+
+print("Http telemetry url:", http_endpoint)
+
 function get_telemetry_data()
     --[[
     Collect all metric values from global variables
@@ -55,17 +65,29 @@ function mqtt_publish(data)
         return
     end
 
-    -- https://nodemcu.readthedocs.io/en/master/modules/mqtt/
+    print("########## MQTT broker host:", mqtt_broker_host)
+    
+    
     m = mqtt.Client("isems-" .. nodeid, 120)
+    m:on("connect", function(client) print ("########## Connected to MQTT broker") end)
+    m:on("offline", function(client) print ("########## MQTT broker offline") end)
+
+    -- on publish message receive event
+    m:on("message", function(client, topic, message) 
+    print("######## Topic", topic .. ":" ) 
+    if message ~= nil then
+    print("######## The MQTT server has received this message:", message)
+    end
+end)
+
     m:connect(mqtt_broker_host, mqtt_broker_port, 0,
         function(client)
-            print("Connected to MQTT broker.")
-            client:publish(mqtt_topic, json, 0, 0, function(client)
-                print("MQTT message sent.")
-            end)
+            -- subscribe topic with qos = 0
+            -- client:subscribe(mqtt_topic, 0, function(client) print("subscribe success") end)
+            client:publish(mqtt_topic, json, 1, 0, function(client) print("########## Success: MQTT message sent.") end)
         end,
         function(client, reason)
-            print("MQTT connect failed. Reason: " .. reason)
+            print("########### MQTT connect failed. Reason: " .. reason)
         end
     )
 
