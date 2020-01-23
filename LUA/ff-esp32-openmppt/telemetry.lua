@@ -118,8 +118,9 @@ function http_post(data)
 -- https://nodemcu.readthedocs.io/en/dev-esp32/modules/http/
  
 headers = {
-  ["Content-Type:"] = "application/json\r\n",
+  ["Content-Type"] = "application/json",
 }
+
 body = json
 http.post(http_endpoint, { headers = headers }, body,
   function(code, data)
