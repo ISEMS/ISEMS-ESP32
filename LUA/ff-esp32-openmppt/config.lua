@@ -2,6 +2,22 @@
 
 -- Lines beginning with two dashes (--) are comments.
 
+-- Secret key for triggering commands via HTTP GET
+-- Beware: Http is unencrypted, so can be sniffed.
+
+webkey="secret123"
+
+-- FTP password. Username is "admin"
+-- Since FTP login and traffic is not encrypted, the password can be sniffed. 
+ftppass='pass123'
+
+-- Autoreboot timer in minutes
+-- The device will reboot once this timer expires.
+-- Set to 0 if you don't want to use this feature.
+
+nextreboot=3600
+
+
 -- Latitude of Geolocation
 lat = 52.52
 
@@ -9,16 +25,16 @@ lat = 52.52
 long = 13.4
 
 -- Node-ID
-nodeid="ESP32-Meshnode-1"
+nodeid="ESP32-Meshnode-Default"
 
 -- Rated capacity of battery in Ampere hours (Ah)
-rated_batt_capacity = 8.0
+rated_batt_capacity = 7.2
 
 -- Rated power rating of the solar module in Watt. 
 solar_module_capacity = 10
 
 -- Average power consumption of the system in Ampere (A)
-average_power_consumption = 0.08
+average_power_consumption = 0.05
 
 -- Accesspoint IP
 ap_ip="192.168.10.10"
@@ -31,7 +47,7 @@ ap_netmask="255.255.255.0"
 ap_gateway="192.168.10.10"
 
 -- Accesspoint WiFi channel
-ap_channel="1"
+ap_channel="9"
 
 -- WiFi mode 
 -- One of: 1 = STATION, 2 = SOFTAP, 3 = STATIONAP, 4 = NULLMODE
@@ -50,7 +66,7 @@ ap_pwd="12345678"
 ap_ssid="esp32-isems-ap"
 
 -- Wifi station AP SSID (the existing WiFi-AP that the device should connect to as a WiFi client)
-sta_ssid="AP2.freifunk.net"
+sta_ssid="freifunk.net"
 
 -- WPA key to connect to the existing AP as WiFi client
 sta_pwd=""

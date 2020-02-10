@@ -3,36 +3,21 @@
 -- IO34 V_in,  Channel 6
 -- IO33 V_out,  Channel 5
 
--- Load content from config.lua
-
--- dofile"config.lua"
-
-
 -- ADC channel 0:GPIO36, 1:GPIO37, 2:GPIO38, 3:GPIO39, 4:GPIO32, 5:GPIO33, 6:GPIO34, 7: GPIO35
 
 -- DAC channel 1 is attached to GPIO25 - DAC channel 2 is attached to GPIO26
 -- Value: 8bit =  0 to 255
 
--- gpio.config( { gpio={14}, dir=gpio.OUT, pull=gpio.PULL_UP })
-
--- dac.enable(dac.CHANNEL_1)
-
 -- MPP range of FF-OpenMPPT-ESP32 v1.0
-
 Vmpp_max = 23.8 
 Vmpp_min = 14.45
+
 -- V_out_max and V_out_max_temp in mV
 V_out_max = 14200
 V_out_max_temp = 14200
 V_oc = 0
 Vcc = 3.045
 ptc_series_resistance_R17 = 2200
-
--- V_out_max_batt_temp = 14.20
-
-
--- Workaround for temporary unaccounted values.
-
 low_voltage_disconnect = 11.90
 
 
@@ -57,6 +42,29 @@ result = math.floor(result)
 print("ADC channel", adcchannel, " result value (12 bit):", result)
    
 return result
+end
+
+function Voutctrl (number_of_steps)
+    
+    print("### Voutctrl active ###\n", "V_out_max_temp:", V_out_max_temp, "V_out:", V_out)
+    while number_of_steps > 0 do 
+        val2 = ADCmeasure(5, 3)
+        -- 0.0625 ratio of Voltage divider 1k/15k
+        V_out_mV = ((val2 / 4095) * Vref) / 0.0625
+        V_out_mV = math.ceil(V_out)
+    
+            if (V_out_max_temp + 50) < V_out_mV then 
+            dac1value = dac1value + 1
+            if dac1value > 254 then dac1value = 254
+            print("WARNING: V_out_ctrl maximum Vmpp reached.") end
+            dac.write(dac.CHANNEL_1, dac1value)
+            print("Setting PWM to ", dac1value)
+            number_of_steps = number_of_steps - 1 
+            end
+            
+     if (V_out_max_temp + 50) >= V_out_mV then number_of_steps = 0 end
+            
+    end
 end
 
 
@@ -150,12 +158,9 @@ adc.setup(adc.ADC1, 4, adc.ATTEN_11db)
 
 end
 
-
-if battery_temperature > 25.00 then V_out_max_temp = V_out_max - ((battery_temperature - 25.00) * 30) end
+V_out_max_temp = V_out_max - ((battery_temperature - 25.00) * 30)
 
 if battery_temperature > 42.00 then V_out_max_temp = 13100 end
-
-if battery_temperature < 25.00 then V_out_max_temp = V_out_max + ((25.00 - battery_temperature) * 30) end
 
 battery_temperature = battery_temperature * 100
 battery_temperature = math.floor(battery_temperature)
@@ -185,16 +190,17 @@ V_in = V_in / 1000
 val2 = ADCmeasure(5, 15)
 
 -- 0.0625 ratio of Voltage divider 1k/15k
-V_out = ((val2 / 4095) * Vref) / 0.0625
-V_out = math.ceil(V_out)
-V_out = V_out / 1000
+V_out_mV = ((val2 / 4095) * Vref) / 0.0625
+V_out_mV = math.ceil(V_out)
+V_out = V_out_mV / 1000
 
 print("V_in =",val1,"V_out =",val2," TempSens =",val3)
 
 print("V_in =",V_in,"V  V_out =",V_out,"V  TempSens =",val3)
 
+if V_out_max_temp < V_out_mV then Voutctrl(12) end
 
-if V_in >= 13 then 
+if V_in >= 13 and V_out_max_temp > V_out_mV then 
 
 dac1value= 254
 dac.write(dac.CHANNEL_1, dac1value)
@@ -239,7 +245,7 @@ if V_out < 11.7 then
         node.dsleep(60000000)
 end
     
-if V_out > 12.3 then 
+if V_out > 12.3 and load_disabled == false then 
         gpio.wakeup(14, gpio.INTR_HIGH)
         gpio.write(14, 1)
         low_voltage_disconnect_state = 1
@@ -283,9 +289,6 @@ print("PTC resistance =", ptc_resistance)
 
 print(lat)
 print(nodeid)
-
-nextreboot = 999
-
 
 packetrev = "1"
 counter_serial_loop = 0
@@ -339,6 +342,7 @@ print("#########################################################################
 print("V_in:", V_in, "V_out:", V_out, "V_out_max:", V_out_max, "V_out_max_temp:", V_out_max_temp)
 print("###########################################################################################")
 
+        charge_status = "Unknown"
        
         if (V_in >= V_out and V_out ~= 0) then charge_status = "Charging" Bit_0 = 1 end
 
@@ -500,6 +504,7 @@ statuscode = (bin2hextable[bit_string_0] .. bin2hextable[bit_string_1] .. bin2he
 
 print("statuscode =", statuscode)
 
+freeRAM = node.heap()
 
 -- CSV payload
 
@@ -533,8 +538,10 @@ if ffopenmppt_log5 ~= nil then
        
 end
 
--- HTTP- and MQTT telemetry
-dofile "telemetry.lua"
+
+
+
+node_uptime = math.floor((node.uptime() / 1000000))
 
 -- HTML output
         pagestring = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Independent Solar Energy Mesh</h1><br><h2>Status of " .. nodeid
@@ -573,18 +580,12 @@ dofile "telemetry.lua"
         pagestring = pagestring .. lat .. "<br>Longitude: "
         pagestring = pagestring .. long
         pagestring = pagestring  .. "<br>Status code: 0x"
-        pagestring = pagestring .. statuscode
-        pagestring = pagestring .. "</h3>"
+        pagestring = pagestring .. statuscode 
+        pagestring = pagestring .. "<br>Free RAM in Bytes: " .. freeRAM
+        pagestring = pagestring .. "<br>Uptime in seconds: " .. node_uptime      
+        pagestring = pagestring .. "</h3> <h2> <a href=\"help.html\">Howto</a></h2>"
        --<h2>" .. ffopenmppt_log .. "<h2>"
        
 print(pagestring)
-
-
-
-
-
-
-
-
 
 
