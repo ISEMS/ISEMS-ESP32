@@ -191,7 +191,7 @@ val2 = ADCmeasure(5, 15)
 
 -- 0.0625 ratio of Voltage divider 1k/15k
 V_out_mV = ((val2 / 4095) * Vref) / 0.0625
-V_out_mV = math.ceil(V_out)
+V_out_mV = math.ceil(V_out_mV)
 V_out = V_out_mV / 1000
 
 print("V_in =",val1,"V_out =",val2," TempSens =",val3)
