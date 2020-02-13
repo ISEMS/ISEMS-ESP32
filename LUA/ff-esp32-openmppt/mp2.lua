@@ -18,7 +18,7 @@ V_out_max_temp = 14200
 V_oc = 0
 Vcc = 3.045
 ptc_series_resistance_R17 = 2200
-low_voltage_disconnect = 0.90
+low_voltage_disconnect = 11.90
 
 
 
