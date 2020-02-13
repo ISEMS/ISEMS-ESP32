@@ -544,7 +544,7 @@ end
 node_uptime = math.floor((node.uptime() / 1000000))
 
 -- HTML output
-        pagestring = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Independent Solar Energy Mesh</h1><br><h2>Status of " .. nodeid
+        pagestring = "<h1>Independent Solar Energy Mesh</h1><br><h2>Status of " .. nodeid
         pagestring = pagestring  .. " (local node)</h2><br><br>Summary: " .. charge_status  .. ". " .. system_status
         pagestring = pagestring  .. "<br>Charge state: " 
         pagestring = pagestring .. charge_state_int
