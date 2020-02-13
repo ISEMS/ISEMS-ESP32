@@ -82,7 +82,15 @@ if encrypted_webkey == false then webkeyhash = webkey end
 
 srv = net.createServer(net.TCP)
 srv:listen(80, function(conn)
+
+    http_preamble = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n"
+
 	conn:on("receive", function(sck, payload)
+
+                -- Send the HTTP response.
+                function send_response(response)
+                    sck:send(http_preamble .. response)
+                end
 
                 -- Authentication key.
                 key  = string.match(payload, webkeyhash)
@@ -106,15 +114,17 @@ srv:listen(80, function(conn)
                     print("INDEX")
                     -- "pagestring" contains the main splash screen generated within "mp2.lua".
                     send_response(pagestring)
+                    return
                 end
 
                 -- Serve "random" page.
                 if rand ~= nil then
                     print("RANDOM")
                     send_response(randomstring)
+                    return
                 end
 
-                -- Serve help page and CSV log.
+                -- Serve help page.
                 if help ~= nil then
                     print("HELP")
                     help_page = [[
@@ -149,27 +159,39 @@ srv:listen(80, function(conn)
 
                         </html>
                         ]]
-                    sck:send(help_page)
+                    send_response(help_page)
+                    return
                 end
+
+                -- Serve CSV log.
                 if csv ~= nil then
                     print("CSV")
-                    sck:send(csvlog)
+                    send_response(csvlog)
+                    return
                 end
+
 
                 -- Invoke device commands.
 
-                if ftp ~= nil and key ~= nil and ftp_runs == nil then
+                -- Protect against unauthorized access.
+                if key == nil then
+                    print("DENIED")
+                    send_response("Will not execute the command. Reason: webkey for admin command is incorrect or missing.")
+                    return
+                end
+
+                if ftp ~= nil and ftp_runs == nil then
                     print("FTP")
                     sck:send("FTP server enabled. MPPT timer stopped. Reboot device when you are finished.")
                     require("ftpserver").createServer('admin', ftppass)
                     mppttimer:stop()
                     ftp_runs = 1
-                    pagestring = "<html>ISEMS is disabled while FTP is running. See <a href=\"help.html\">Howto</a><html>"
+                    send_response("<html>ISEMS is disabled while FTP is running. See <a href=\"help.html\">Howto</a><html>")
                 end
 
-                if rst ~= nil and key ~= nil then
+                if rst ~= nil then
                     print("RST")
-                    sck:send("Rebooting in 2 seconds. Will be back in 8 seconds.")
+                    send_response("Rebooting in 2 seconds. Will be back in 8 seconds.")
                     reboottimer = tmr.create()
                     reboottimer:register(2000, tmr.ALARM_SINGLE, function()
                         node.restart()
@@ -177,55 +199,52 @@ srv:listen(80, function(conn)
                     reboottimer:start()
                 end
 
-                if tel ~= nil and key ~= nil and telnet_runs == nil then
+                if tel ~= nil and telnet_runs == nil then
                     print("TELNET")
-                    sck:send("Lua interface via telnet port 2323 enabled.")
+                    send_response("Lua interface via telnet port 2323 enabled.")
                     require"telnet"
                     telnet_runs = 1
                 end
 
-                if sh ~= nil and key ~= nil and shell_runs == nil then
+                if sh ~= nil and shell_runs == nil then
                     print("SHELL")
-                    sck:send("Command line shell via telnet port 2333 enabled.")
+                    send_response("Command line shell via telnet port 2333 enabled.")
                     require"telnet2"
                     shell_runs = 1
                 end
 
-                if mppt_start ~= nil and key ~= nil then
+                if mppt_start ~= nil then
                     print("MPPT")
-                    sck:send("Starting MPPT timer.")
-                    pagestring = [[
+                    send_response([[
                         <html>
+                        Starting MPPT timer.
+                        <br/><br/>
                         ISEMS is enabled. Wait a minute until the status is updated and reload the page.
                         For general help information see <a href=\"help.html\">Howto</a>
                         <html>
-                        ]]
+                        ]])
                     mppttimer:start()
                 end
 
-                if load_off ~= nil and key ~= nil then
+                if load_off ~= nil then
                     print("LOAD_OFF")
-                    sck:send("Load disabled.")
+                    send_response("Load disabled.")
                     gpio.wakeup(14, gpio.INTR_LOW)
                     gpio.write(14, 0)
                     load_disabled = true
                 end
 
-                if load_on ~= nil and key ~= nil then
+                if load_on ~= nil then
                     print("LOAD_ON")
-                    sck:send("Load enabled.")
+                    send_response("Load enabled.")
                     gpio.wakeup(14, gpio.INTR_HIGH)
                     gpio.write(14, 1)
                     load_disabled = false
                 end
 
+                -- Crypto magic ;].
                 if encrypted_webkey == true then
                     randomstring, webkeyhash = cryptokey(webkey)
-                end
-
-                if key == nil then
-                    print("DENIED")
-                    sck:send("Will not execute the command. Reason: webkey for admin command is incorrect or missing.")
                 end
 
 	end)
