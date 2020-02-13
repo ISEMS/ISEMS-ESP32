@@ -132,20 +132,24 @@ srv:listen(80, function(conn)
                     print("HELP")
                     help_page = [[
                         <html>
-                        Commands on this device can be executed remotely by sending HTTP GET requests.
+                        Commands on this device can be executed remotely by sending HTTP POST requests + secret-key.
                         <br><br>
 
-                        For example, if you open <b>http://IP-or-URL-of-FF-ESP32-device/ftp+secret123</b> in a browser,
+                        Assuming your secret-key is "secret123", if you invoke
+                        <pre>curl http://IP-or-URL-of-FF-ESP32-device --request POST --data-raw 'ftp+secret123'</pre>,
                         the system will start a FTP server and stop the main program loop to free up CPU and RAM resources.
                         <br><br>
-                        Now you can upload a customized version of <b>config.lua</b> via FTP
-                        with the default FTP user-password combination <b>admin / pass123</b>.
-                        <br><br>
-                        All passwords are stored in <b>config.lua</b> and should be changed before deploying the system, of course.
-                        Reboot the device to apply the new config.
+
+                        Now, you can upload a customized version of <b>config.lua</b> via FTP
+                        with the default FTP user-password combination <b>admin / pass123</b> like
+                        <pre>lftp -u admin,pass123 IP-or-URL-of-FF-ESP32-device -c 'put config.lua'</pre>
                         <br><br>
 
-                        <h3>Commands:</h3>
+                        All passwords are stored in <b>config.lua</b> and should be changed before deploying the system, of course.
+                        Just reboot the device to apply the new configuration.
+                        <br><br>
+
+                        <h3>Commands</h3>
                         <b>/ftp+key</b> (starts ftp server and pauses the main MPPT program)<br>
                         <b>/reboot+key</b><br><b>/telnet+key</b> (starts an open (!) telnet LUA command line interface at port 2323)<br>
                         <b>/shell+key</b> (starts an open (!) Unix-like minimal commandline interface at telnet port 2333)<br>
@@ -153,12 +157,11 @@ srv:listen(80, function(conn)
                         <b>/loadoff+key</b> Turn load off.<br>
                         <b>/loadon+key</b> Turn load on.<br>
 
-                        <h3>
-                            Use your passwords only over a encrypted WiFi and if you trust the network.
-                            FTP and HTTP keys can be sniffed easily, as they are sent unencrypted.
-                            Links are case sensitive. Remember that this is a tiny device with very limited ressources.
-                            If all features are enabled, the device might occasionally run out of memory, crash and reboot.
-                        </h3>
+                        <h3>Caveats</h3>
+                        Use your passwords only over a encrypted WiFi and if you trust the network.
+                        FTP and HTTP keys can be sniffed easily, as they are sent unencrypted.
+                        Links are case sensitive. Remember that this is a tiny device with very limited ressources.
+                        If all features are enabled, the device might occasionally run out of memory, crash and reboot.
 
                         </html>
                         ]]
