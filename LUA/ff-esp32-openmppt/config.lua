@@ -7,6 +7,11 @@
 
 webkey="secret123"
 
+-- Require sha256'ed one-time webkey (strongly recommended in public networks)
+-- This will avoid exposing the webkey over the air.
+
+encrypted_webkey = false
+
 -- FTP password. Username is "admin"
 -- Since FTP login and traffic is not encrypted, the password can be sniffed. 
 ftppass='pass123'

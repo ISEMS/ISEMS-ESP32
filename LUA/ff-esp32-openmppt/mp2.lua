@@ -18,7 +18,7 @@ V_out_max_temp = 14200
 V_oc = 0
 Vcc = 3.045
 ptc_series_resistance_R17 = 2200
-low_voltage_disconnect = 11.90
+low_voltage_disconnect = 0.90
 
 
 
@@ -32,7 +32,7 @@ function ADCmeasure (adcchannel, number_of_runs, result)
     --GPIO35
     value1 = adc.read(adc.ADC1, adcchannel)
     value2 = value2 + value1
-    print(value2, value1)
+    --print(value2, value1)
     c = c+1
     end
     
@@ -194,9 +194,9 @@ V_out_mV = ((val2 / 4095) * Vref) / 0.0625
 V_out_mV = math.ceil(V_out_mV)
 V_out = V_out_mV / 1000
 
-print("V_in =",val1,"V_out =",val2," TempSens =",val3)
+--print("V_in =",val1,"V_out =",val2," TempSens =",val3)
 
-print("V_in =",V_in,"V  V_out =",V_out,"V  TempSens =",val3)
+--print("V_in =",V_in,"V  V_out =",V_out,"V  TempSens =",val3)
 
 if V_out_max_temp < V_out_mV then Voutctrl(12) end
 
@@ -237,7 +237,7 @@ if V_in < V_out then
 
 end
     
-if V_out < 11.7 then
+if V_out < low_voltage_disconnect then
         print("Disabled power output")
         gpio.wakeup(14, gpio.INTR_LOW)
         gpio.write(14, 0)
@@ -359,7 +359,7 @@ print("#########################################################################
 -- Charge state estimate
 -- To estimate charge state when discharging is relatively simple, due to low and constant load.
        
-       print("we are at charge state estimate")
+       --print("we are at charge state estimate")
        print("V_in:", V_in, "V_out:", V_out)
         
         if V_in < V_out and V_out > 12.60 then charge_state = (95 + ((V_out - 12.6) * 20)) end 
@@ -510,9 +510,9 @@ freeRAM = node.heap()
 
 timestamp = time.get()
 
-print("Creating csvlog.")
+-- print("Creating csvlog.")
        
-print(nodeid, packetrev, timestamp, firmware_type, nextreboot, powersave, V_oc, V_in, V_out, charge_state_int, health_estimate, battery_temperature, low_voltage_disconnect, V_out_max_temp, rated_batt_capacity, solar_module_capacity, lat, long, statuscode)
+-- print(nodeid, packetrev, timestamp, firmware_type, nextreboot, powersave, V_oc, V_in, V_out, charge_state_int, health_estimate, battery_temperature, low_voltage_disconnect, V_out_max_temp, rated_batt_capacity, solar_module_capacity, lat, long, statuscode)
       
 ffopenmppt_log = nodeid .. ";" .. packetrev .. ";" .. timestamp .. ";" .. firmware_type .. ";" .. nextreboot .. ";" .. powersave .. ";".. V_oc .. ";".. V_in .. ";".. V_out .. ";".. charge_state_int .. ";" .. health_estimate .. ";".. battery_temperature .. ";".. low_voltage_disconnect .. ";".. V_out_max_temp .. ";" .. rated_batt_capacity .. ";".. solar_module_capacity .. ";".. lat .. ";" .. long .. ";" ..  statuscode
 
@@ -553,10 +553,9 @@ node_uptime = math.floor((node.uptime() / 1000000))
         pagestring = pagestring .. " minutes<br>Battery voltage: "
         pagestring = pagestring .. V_out
         pagestring = pagestring .. " Volt<br>Battery temperature: "
-        
-        -- pagestring = pagestring .. " Volt<br>Temperature corrected charge end voltage: "
-        -- pagestring = pagestring .. V_out_max_temp
-        -- pagestring = pagestring .. " Volt<br>Battery temperature: "
+        pagestring = pagestring .. " Volt<br>Temperature corrected charge end voltage: "
+        pagestring = pagestring .. V_out_max_temp
+        pagestring = pagestring .. " Volt<br>Battery temperature: "
         pagestring = pagestring .. battery_temperature
         pagestring = pagestring .. "&deg;C<br>Battery health estimate: "
         pagestring = pagestring .. health_estimate
@@ -582,9 +581,8 @@ node_uptime = math.floor((node.uptime() / 1000000))
         pagestring = pagestring  .. "<br>Status code: 0x"
         pagestring = pagestring .. statuscode 
         pagestring = pagestring .. "<br>Free RAM in Bytes: " .. freeRAM
-        pagestring = pagestring .. "<br>Uptime in seconds: " .. node_uptime      
+        pagestring = pagestring .. "<br>Uptime in seconds: " .. node_uptime   
         pagestring = pagestring .. "</h3> <h2> <a href=\"help.html\">Howto</a></h2>"
-       --<h2>" .. ffopenmppt_log .. "<h2>"
        
 print(pagestring)
 
