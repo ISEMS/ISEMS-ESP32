@@ -84,44 +84,149 @@ srv = net.createServer(net.TCP)
 srv:listen(80, function(conn)
 	conn:on("receive", function(sck, payload)
 
-                 csv  = string.match(payload, "csv")
-                 ftp  = string.match(payload, "ftp+")
-                 rst  = string.match(payload, "reboot+")
-                 tel  = string.match(payload, "telnet+")
-                 sh  = string.match(payload, "shell+")
-                 m  = string.match(payload, "mpptstart+")
-                 load_off = string.match(payload, "loadoff+")
-                 load_on = string.match(payload, "loadon+")
-                 rand = string.match(payload, "random.html")
-                 h  = string.match(payload, "help")
+                -- Authentication key.
+                key  = string.match(payload, webkeyhash)
 
-                 key  = string.match(payload, webkeyhash)
-                 rand = string.match(payload, "random")
+                -- Define resources.
+                csv  = string.match(payload, "csv")
+                help  = string.match(payload, "help")
+                rand = string.match(payload, "random")
 
+                -- Define actions.
+                ftp  = string.match(payload, "ftp+")
+                rst  = string.match(payload, "reboot+")
+                tel  = string.match(payload, "telnet+")
+                sh  = string.match(payload, "shell+")
+                mppt_start  = string.match(payload, "mpptstart+")
+                load_off = string.match(payload, "loadoff+")
+                load_on = string.match(payload, "loadon+")
 
-                if csv == nil and rand == nil  and ftp == nil and rst == nil and tel == nil and sh == nil and m == nil and h == nil and load_off == nil and load_on == nil then sck:send(pagestring) print("INDEX") end
+                -- Serve HTML index page.
+                if csv == nil and rand == nil and ftp == nil and rst == nil and tel == nil and sh == nil and mppt_start == nil and help == nil and load_off == nil and load_on == nil then
+                    print("INDEX")
+                    -- "pagestring" contains the main splash screen generated within "mp2.lua".
+                    send_response(pagestring)
+                end
 
-                if csv ~= nil then print("CSV") sck:send(csvlog)  end
+                -- Serve "random" page.
+                if rand ~= nil then
+                    print("RANDOM")
+                    send_response(randomstring)
+                end
 
-                if rand ~= nil then print("RANDOM") sck:send(randomstring)  end
+                -- Serve help page and CSV log.
+                if help ~= nil then
+                    print("HELP")
+                    help_page = [[
+                        <html>
+                        Commands on this device can be executed remotely by sending HTTP GET requests.
+                        <br><br>
 
-                if ftp ~= nil and key ~= nil and ftp_runs == nil then print("FTP") sck:send("FTP server enabled. MPPT timer stopped. Reboot device when you are finished.") require("ftpserver").createServer('admin', ftppass)  mppttimer:stop() ftp_runs = 1 pagestring = "<html>ISEMS is disabled while FTP is running. See <a href=\"help.html\">Howto</a><html>" if encrypted_webkey == true then  randomstring, webkeyhash = cryptokey (webkey) end end
+                        For example, if you open <b>http://IP-or-URL-of-FF-ESP32-device/ftp+secret123</b> in a browser,
+                        the system will start a FTP server and stop the main program loop to free up CPU and RAM resources.
+                        <br><br>
+                        Now you can upload a customized version of <b>config.lua</b> via FTP
+                        with the default FTP user-password combination <b>admin / pass123</b>.
+                        <br><br>
+                        All passwords are stored in <b>config.lua</b> and should be changed before deploying the system, of course.
+                        Reboot the device to apply the new config.
+                        <br><br>
 
-                if rst ~= nil and key ~= nil then print("RST") sck:send("Rebooting in 2 seconds. Will be back in 8 seconds.") reboottimer = tmr.create() reboottimer:register(2000, tmr.ALARM_SINGLE, function() node.restart() end) reboottimer:start() end
+                        <h3>Commands:</h3>
+                        <b>/ftp+key</b> (starts ftp server and pauses the main MPPT program)<br>
+                        <b>/reboot+key</b><br><b>/telnet+key</b> (starts an open (!) telnet LUA command line interface at port 2323)<br>
+                        <b>/shell+key</b> (starts an open (!) Unix-like minimal commandline interface at telnet port 2333)<br>
+                        <b>/mpptstart+key</b> (restarts the main mppt program. It is automatically paused when FTP starts in order to save CPU and RAM.)<br>
+                        <b>/loadoff+key</b> Turn load off.<br>
+                        <b>/loadon+key</b> Turn load on.<br>
 
-                if tel ~= nil and key ~= nil and telnet_runs == nil then print("TELNET") sck:send("Lua interface via telnet port 2323 enabled.") require"telnet" telnet_runs = 1 if encrypted_webkey == true then  randomstring, webkeyhash = cryptokey (webkey) end  end
+                        <h3>
+                            Use your passwords only over a encrypted WiFi and if you trust the network.
+                            FTP and HTTP keys can be sniffed easily, as they are sent unencrypted.
+                            Links are case sensitive. Remember that this is a tiny device with very limited ressources.
+                            If all features are enabled, the device might occasionally run out of memory, crash and reboot.
+                        </h3>
 
-                if sh ~= nil and key ~= nil and shell_runs == nil then print("SHELL") sck:send("Command line shell via telnet port 2333 enabled.") require"telnet2" shell_runs = 1 if encrypted_webkey == true then  randomstring, webkeyhash = cryptokey (webkey) end  end
+                        </html>
+                        ]]
+                    sck:send(help_page)
+                end
+                if csv ~= nil then
+                    print("CSV")
+                    sck:send(csvlog)
+                end
 
-                if m ~= nil and key ~= nil then print("MPPT") sck:send("Starting MPPT timer.") pagestring = "<html>ISEMS is enabled. Wait a minute unti the status is updated and reload the page. For general help information see <a href=\"help.html\">Howto</a><html>" mppttimer:start() if encrypted_webkey == true then  randomstring, webkeyhash = cryptokey (webkey) end  end
+                -- Invoke device commands.
 
-                if load_off ~= nil and key ~= nil then print("LOAD_OFF") sck:send("Load disabled.") gpio.wakeup(14, gpio.INTR_LOW) gpio.write(14, 0) load_disabled = true if encrypted_webkey == true then  randomstring, webkeyhash = cryptokey (webkey) end  end
+                if ftp ~= nil and key ~= nil and ftp_runs == nil then
+                    print("FTP")
+                    sck:send("FTP server enabled. MPPT timer stopped. Reboot device when you are finished.")
+                    require("ftpserver").createServer('admin', ftppass)
+                    mppttimer:stop()
+                    ftp_runs = 1
+                    pagestring = "<html>ISEMS is disabled while FTP is running. See <a href=\"help.html\">Howto</a><html>"
+                end
 
-                if load_on ~= nil and key ~= nil then print("LOAD_ON") sck:send("Load enabled.")  gpio.wakeup(14, gpio.INTR_HIGH) gpio.write(14, 1) load_disabled = false if encrypted_webkey == true then  randomstring, webkeyhash = cryptokey (webkey) end end
+                if rst ~= nil and key ~= nil then
+                    print("RST")
+                    sck:send("Rebooting in 2 seconds. Will be back in 8 seconds.")
+                    reboottimer = tmr.create()
+                    reboottimer:register(2000, tmr.ALARM_SINGLE, function()
+                        node.restart()
+                    end)
+                    reboottimer:start()
+                end
 
-                if (ftp ~= nil or rst ~= nil or tel ~= nil or sh ~= nil or m ~= nil or load_off ~= nil or load_on ~= nil ) and key == nil then print("DENIED") sck:send("Will not execute the command. Reason: webkey for admin command is incorrect or missing.") end
+                if tel ~= nil and key ~= nil and telnet_runs == nil then
+                    print("TELNET")
+                    sck:send("Lua interface via telnet port 2323 enabled.")
+                    require"telnet"
+                    telnet_runs = 1
+                end
 
-                if h ~= nil then print("HELP") sck:send("<html>Commands on this device can be executed remotely by sending HTTP GET requests + secret-key. <br><br>Assuming your secret-key is secret123, if you open the URL <h3>http://IP-or-URL-of-FF-ESP32-device/ftp+secret123</h3> in a browser, the system will start a FTP server and stop the main program loop to free up CPU and RAM ressources. Now you can upload a customized version of <b>config.lua</b> via FTP with the default FTP user-password combination <b>admin / pass123</b>. All passwords are stored in <b>config.lua</b> and should be changed before deploying the system, of course. Reboot the device to apply the new config.<br><br>You have the option to use a unsafe (plain text key) and a (relatively) safe option to execute remote commands. If the option <b>encrypted_webkey=true</b> is set in <b>config.lua</b>, each action triggered via HTTP GET requires a encrypted one-time key. The one-time key is the sha256 checksum of the random string nonce+secret-key (without the <b>+</b> in between). The nonce is available <a href=\"random.html\">here</a>. For example, if the nonce is 123456789, the one-time key can be generated by executing <b>echo -n 123245689secret123 | sha256sum</b> <h3>Commands:</h3> <b>/ftp+key</b> (starts ftp server and pauses the main MPPT program)<br><b>/reboot+key</b><br><b>/telnet+key</b> (starts an open (!) telnet LUA command line interface at port 2323)<br><b>/shell+key</b> (starts an open (!) Unix-like minimal commandline interface at telnet port 2333)<br><b>/mpptstart+key</b> (restarts the main mppt program. It is automatically paused when FTP starts in order to save CPU and RAM.)<br><b>/loadoff+key</b> Turn load off.<br><b>/loadon+key</b> Turn load on.<h3>Use your passwords only over a encrypted WiFi and if you trust the network. FTP and HTTP keys can be sniffed easily, as they are sent unencrypted. Links are case sensitive. Remember that this is a tiny device with very limited resources. If all features are enabled, the device might occasionally run out of memory, crash and reboot. </h3>") end
+                if sh ~= nil and key ~= nil and shell_runs == nil then
+                    print("SHELL")
+                    sck:send("Command line shell via telnet port 2333 enabled.")
+                    require"telnet2"
+                    shell_runs = 1
+                end
+
+                if mppt_start ~= nil and key ~= nil then
+                    print("MPPT")
+                    sck:send("Starting MPPT timer.")
+                    pagestring = [[
+                        <html>
+                        ISEMS is enabled. Wait a minute until the status is updated and reload the page.
+                        For general help information see <a href=\"help.html\">Howto</a>
+                        <html>
+                        ]]
+                    mppttimer:start()
+                end
+
+                if load_off ~= nil and key ~= nil then
+                    print("LOAD_OFF")
+                    sck:send("Load disabled.")
+                    gpio.wakeup(14, gpio.INTR_LOW)
+                    gpio.write(14, 0)
+                    load_disabled = true
+                end
+
+                if load_on ~= nil and key ~= nil then
+                    print("LOAD_ON")
+                    sck:send("Load enabled.")
+                    gpio.wakeup(14, gpio.INTR_HIGH)
+                    gpio.write(14, 1)
+                    load_disabled = false
+                end
+
+                if encrypted_webkey == true then
+                    randomstring, webkeyhash = cryptokey(webkey)
+                end
+
+                if key == nil then
+                    print("DENIED")
+                    sck:send("Will not execute the command. Reason: webkey for admin command is incorrect or missing.")
+                end
 
 	end)
 	conn:on("sent", function(sck) sck:close() end)
