@@ -92,6 +92,9 @@ srv:listen(80, function(conn)
                     sck:send(http_preamble .. response)
                 end
 
+                -- HTTP method.
+                method_post = string.match(payload, "POST")
+
                 -- Authentication key.
                 key  = string.match(payload, webkeyhash)
 
@@ -172,6 +175,12 @@ srv:listen(80, function(conn)
 
 
                 -- Invoke device commands.
+
+                -- Protect against invalid HTTP method.
+                if method_post == nil then
+                    send_response("Will not execute the command. Reason: Invoking commands needs HTTP POST.")
+                    return
+                end
 
                 -- Protect against unauthorized access.
                 if key == nil then
