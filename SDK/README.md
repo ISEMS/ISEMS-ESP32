@@ -25,7 +25,7 @@ Run:
 `make menuconfig`
 
 The modules enabled in the ISEMS sdkconfig contain all module dependencies to run the current ISEMS Lua programs.
-Make chances if necessary.
+Make changes if necessary.
 
 **To flash the firmware:**
 
