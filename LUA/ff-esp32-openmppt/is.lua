@@ -76,7 +76,7 @@ if webkey == nil then webkey = "empty" end
 
 if encrypted_webkey == true then  randomstring,  webkeyhash = cryptokey (webkey) end
 
-if encrypted_webkey == false then webkeyhash = webkey end
+if encrypted_webkey == false then webkeyhash = webkey randomstring = "Encryption not enabled." end
 
 
 
