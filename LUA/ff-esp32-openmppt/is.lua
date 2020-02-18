@@ -99,7 +99,7 @@ srv:listen(80, function(conn)
                 key  = string.match(payload, webkeyhash)
 
                 -- Define resources.
-                csv  = string.match(payload, "csv")
+                csv  = string.match(payload, ".log")
                 help  = string.match(payload, "help")
                 rand = string.match(payload, "random")
 
@@ -288,7 +288,9 @@ wifi.ap.on("sta_connected", function(event, info) print("Station connected:  "..
 -- mandatory to start wifi after reset
 wifi.start()
 
-wifi.sta.sethostname("FF-ESP32")
+-- wifi.sta.sethostname is broken.
+-- wifi.sta.sethostname("FF-ESP32")
+
 cfg={}
 
 cfg.ssid=ap_ssid
@@ -344,7 +346,9 @@ wifi.mode(wifi.STATION, true)
 wifi.sta.on("connected", function() print("connected") end)
 wifi.sta.on("got_ip", function(event, info) print("got ip "..info.ip) end)
 
-wifi.sta.sethostname("FF-ESP32")
+-- wifi.sta.sethostname is broken.
+--wifi.sta.sethostname("FF-ESP32")
+
 -- mandatory to start wifi after reset
 wifi.start()
 
