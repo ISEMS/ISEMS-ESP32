@@ -216,8 +216,21 @@ Boot messages will start rushing over the screen. The device will then idle for 
 
 In case the boot process has to be interrupted, type stop() and press ENTER now.
 
+##### Using FTP via WiFi
 
-# Using the sha256'ed webkey option
+Remember that FTP credentials can be sniffed in a public WiFi network.
+
+* Enable the FTP server with the HTTP Command `http://device/ftp+key`
+
+* Upload the file `config.lua` with a FTP program using the credentials *admin* and the ftp password listed in *config.lua* (default: *ftppass123*)
+
+* Check whether the upload has finished successfully.
+
+* Reboot the device with the HTTP command `http://device/reboot+key`
+
+
+
+# Using the safe(r) sha256'ed webkey option
 
 This method provides a primitive cryptographic authentication method (*Digest Auth*) to avoid untrusted people on an open network taking control over the device.
 
@@ -231,13 +244,13 @@ If the option
 ### The manual and painful method of using our primitive Digest AUTH scheme - before scripting it.
 
 
-The ISEMS system generates a public one-time random string (a nonce). It can be downloaded from the address `http://ISEMSDEVICE/random` by everyone.
+The ISEMS system generates a public one-time random string (a nonce). It can be downloaded from the address `http://device/random` by everyone.
 
 Now, let's assume the public nonce is **000abcdefg999** and the web password is **secret123**. The **sha256** cryptographic hash of both parts concatenated (copied) together into the single string **000abcdefg999secret123** generates our one-time password.
 
-There are online calculators for sha256 [hashes](https://hashgenerator.de/). So despite being a bit cumbersome, the whole process can be completed with a graphical browser, if you are not concerned about sending the string to an online calculator. That might be ok, if this type of interaction is rarely needed.
+There are online calculators for sha256 [hashes](https://hashgenerator.de/). So despite being a bit cumbersome, the whole process can be completed with a graphical browser by copy & paste, if you are not concerned about sending the string to an online calculator. 
 
-A command line example using sha256sum:
+A command line example generating the one-time key using sha256sum:
 
 ```
 echo -n "000abcdefg999secret123" | sha256sum
@@ -246,16 +259,16 @@ echo -n "000abcdefg999secret123" | sha256sum
 ```
 
 
-That's the new one-time key. We are now ready to safely send a command to the ISEMS system - turn the load output on, for example.
-
 Calling the following URL in a browser or with a tool like **curl**, **wget**, **you-name-it** will now turn on the external load:
 
-**http://ISEMSDEVICE/loadon+6bc4a3b20e343baae9ff15cf61acc8861ef47650c55e0f24866394f72ebbf574**
+**http://device/loadon+6bc4a3b20e343baae9ff15cf61acc8861ef47650c55e0f24866394f72ebbf574**
 
-The reply will be `Load enabled.`
+The reply from the device will be `Load enabled.`
 
 
 This way, the password is never exposed over the network. An attacker could still sniff the sha256'ed key and try a replay attack, but every time a sha256'ed webkey is used, it is thrown away and a new nonce is generated.
+
+If you rarely need to trigger a command manually, this somehow cumbersome method might be sufficient. The whole process becomes a breeze when it is scripted. For example, a high power WiFi radio setup connected to the load output of the FF-ESP32-OpenMPPT board can be turned on or off on demand from a remote place. This process can be scripted i.e. if no one is using the network at night, it can be turned on or off on demand from a remote site.
 
 
 
