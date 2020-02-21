@@ -1,0 +1,27 @@
+LICENSE-GUIDE
+
+vrcal.lua – Copyright by Corinna "Elektra" Aichele 2020. Licencse GPLv2.
+is.lua – Copyright by Corinna "Elektra" Aichele 2020. Licencse GPLv2. Contributions by Andreas Motl.
+mp2.lua – Copyright by Corinna "Elektra" Aichele 2020. Licencse GPLv2.
+cmds.lua – Public Domain by Martin Schaller 2020, with modifications by Corinna "Elektra" Aichele.
+shell.lua – Public Domain by Martin Schaller 2020, with modifications by Corinna "Elektra" Aichele.
+telemetry.lua  – Code example for nodemcu from zeroday and others, with modifications by Corinna "Elektra" Aichele and Andreas Motl. 
+telnet2.lua  – Code example for nodemcu from zeroday and others, with modifications by Martin Schaller and Corinna "Elektra" Aichele. MIT-License
+telnet.lua  – Code example for nodemcu from zeroday and others. MIT-License.
+init.lua – Public Domain by Martin Schaller 2020, with modifications by Corinna "Elektra" Aichele.
+
+All Markdown documentation files in this folder: Copyright by Corinna "Elektra" Aichele 2020 in the Public Domain.
+
+If you have objections or remarks, let me know:
+
+
+
+onelektra
+
+at 
+
+gmx 
+
+dot 
+
+net

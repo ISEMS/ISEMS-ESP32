@@ -1,3 +1,26 @@
+--[[
+* **********************************************************************
+ * ISEMS LUA source code for FF-ESP32-OpenMPPT
+ * Copyright (C) 2020  by Corinna 'Elektra' Aichele with contributions
+ * by Andreas Motl
+ *
+ * This file is part of the Open-Hardware and Open-Software project 
+ * FF-ESP32-OpenMPPT.
+ * 
+ * This file is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This source code is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this source file. If not, see http://www.gnu.org/licenses/. 
+ ************************************************************************* ]]
+
+
 -- If config.lua doesn't contain this setting, set to "false".
 encrypted_webkey = false
 
@@ -179,11 +202,13 @@ srv:listen(80, function(conn)
 
                 -- Invoke device commands.
 
+                
+                --[[
                 -- Protect against invalid HTTP method.
                 if method_post == nil then
                     send_response("Will not execute the command. Reason: Invoking commands needs HTTP POST.")
                     return
-                end
+                end]]
 
                 -- Protect against unauthorized access.
                 if key == nil then
