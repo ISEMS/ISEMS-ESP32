@@ -318,7 +318,7 @@ counter_serial_loop = 0
 health_estimate = 100
 powersave = 0
 timestamp = 123456789
-firmware_type = "FF-ESP_1A"
+firmware_type = "FF-ESP-1A"
 pagestring = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Independent Solar Energy Mesh</h1><br><h2>Status of " .. nodeid .. "(local node)</h2><br> No data yet. Come back in a minute."
 csvlog = nodeid .. ";1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0"
 quickstart_threshold = 14
@@ -380,7 +380,7 @@ print("#########################################################################
         if (V_out_max_temp == 0.0) then V_out_max_temp = 14.2 end 
 
 -- Charge state estimate
--- To estimate charge state when discharging is relatively simple, due to low and constant load.
+-- To estimate charge state when discharging is relatively simple, due to low and relatively constant load.
        
        --print("we are at charge state estimate")
        print("V_in:", V_in, "V_out:", V_out)
@@ -403,8 +403,11 @@ print("#########################################################################
         -- Detect and handle very low charge current
         -- At very low charge current, the V_oc versus V_mpp ratio is smaller than the MPP controller calculates.
 
-        if V_out < (V_out_max_temp - 0.05) and V_in > V_out and 1.22 > (V_oc / V_in) and V_out > 12.6 then charge_state = (85 + ((V_out - 12.6) * 30)) end
-       
+        if V_out < (V_out_max_temp - 0.05) and V_in > V_out and 1.22 > (V_oc / V_in) and V_out > 12.6 then charge_state = (85 + ((V_out - 12.6) * 25)) end
+        
+        if V_out < (V_out_max_temp - 0.05) and V_in > V_out and 1.22 > (V_oc / V_in) and V_out <= 12.6 then charge_state = (10 + ((V_out - 11.6) * 75)) end 
+        
+        
                     
         -- Detect and handle considerable charge current
         -- At considerable charge current, the V_oc versus V_mpp ratio matches the ratio the MPP controller calculates. Unless the current doesn't go down close to zero, we haven't reached charge limit.
@@ -575,7 +578,6 @@ node_uptime = math.floor((node.uptime() / 1000000))
         pagestring = pagestring .. nextreboot
         pagestring = pagestring .. " minutes<br>Battery voltage: "
         pagestring = pagestring .. V_out
-        pagestring = pagestring .. " Volt<br>Battery temperature: "
         pagestring = pagestring .. " Volt<br>Temperature corrected charge end voltage: "
         pagestring = pagestring .. V_out_max_temp
         pagestring = pagestring .. " Volt<br>Battery temperature: "

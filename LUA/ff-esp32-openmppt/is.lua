@@ -155,11 +155,10 @@ srv:listen(80, function(conn)
                     print("HELP")
                     help_page = [[
                         <html>
-                        Commands on this device can be executed remotely by sending HTTP POST requests + secret-key.
+                        Commands on this device can be executed remotely by sending HTTP requests + secret-key.
                         <br><br>
 
-                        Assuming your secret-key is "secret123", if you invoke
-                        <pre>curl http://IP-or-URL-of-FF-ESP32-device --request POST --data-raw 'ftp+secret123'</pre>,
+                        Assuming your secret-key is "secret123", if you request <b>http://device/ftp+secret123</b>
                         the system will start a FTP server and stop the main program loop to free up CPU and RAM resources.
                         <br><br>
 
