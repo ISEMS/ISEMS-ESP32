@@ -216,14 +216,25 @@ srv:listen(80, function(conn)
                     return
                 end
 
+                
+                if ftp ~= nil and ftp_runs == 1 then
+                    print("FTP")
+                    send_response("<html>FTP server already running.</html>")
+                    
+                end
+           
+           
                 if ftp ~= nil and ftp_runs == nil then
                     print("FTP")
-                    sck:send("FTP server enabled. MPPT timer stopped. Reboot device when you are finished.")
+                    --sck:send("FTP server enabled. MPPT timer stopped. Reboot device when you are finished.")
+                    send_response("<html>FTP server enabled. MPPT timer stopped. Reboot device when you are finished.<br>\nISEMS is disabled while FTP is running. See <a href=\"help.html\">Howto</a></html>")
                     require("ftpserver").createServer('admin', ftppass)
                     mppttimer:stop()
                     ftp_runs = 1
-                    send_response("<html>ISEMS is disabled while FTP is running. See <a href=\"help.html\">Howto</a><html>")
+                    
                 end
+
+                
 
                 if rst ~= nil then
                     print("RST")
