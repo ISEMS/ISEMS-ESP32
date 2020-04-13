@@ -69,26 +69,34 @@ end
 
 function Voutctrl (number_of_steps)
     
+    if dac1value == nil then number_of_steps = 0  end 
+    
     print("### Voutctrl active ###\n", "V_out_max_temp:", V_out_max_temp, "V_out:", V_out)
     while number_of_steps > 0 do 
-        val2 = ADCmeasure(5, 3)
-        -- 0.0625 ratio of Voltage divider 1k/15k
-        V_out_mV = ((val2 / 4095) * Vref) / 0.0625
-        V_out_mV = math.ceil(V_out)
-    
-            if (V_out_max_temp + 50) < V_out_mV then 
+            val2 = ADCmeasure(5, 3)
+            -- 0.0625 ratio of Voltage divider 1k/15k
+            V_out_mV = ((val2 / 4095) * Vref) / 0.0625
+            V_out_mV = math.ceil(V_out_mV)
+            V_out = V_out_mV / 1000 
+            print("V_out_mV:", V_out_mV, "V_out:", V_out, "V_out_max_temp:", V_out_max_temp)   
+            
+            if (V_out_max_temp + 0.05) < V_out then 
             dac1value = dac1value + 1
-            if dac1value > 254 then dac1value = 254
-            print("WARNING: V_out_ctrl maximum Vmpp reached.") end
-            dac.write(dac.CHANNEL_1, dac1value)
-            print("Setting PWM to ", dac1value)
-            number_of_steps = number_of_steps - 1 
+            print("Increasing dac1value =", dac1value)
+            number_of_steps = number_of_steps - 1
             end
             
-     if (V_out_max_temp + 50) >= V_out_mV then number_of_steps = 0 end
+            if dac1value > 254 then dac1value = 254
+            print("WARNING: V_out_ctrl maximum Vmpp reached.")
+            number_of_steps = 0
+            end
+            
+            if (V_out_max_temp + 0.05) >= V_out then number_of_steps = 0 end
+            print("Setting PWM to ", dac1value)
+            dac.write(dac.CHANNEL_1, dac1value)
+            end
             
     end
-end
 
 
 
@@ -121,20 +129,7 @@ Vref6dB = Vref * 0.002
 --val3 = adc.read(adc.ADC1, 4)
 val3 = ADCmeasure(4, 15)
 
-print("ADC Temp sens measure first run result:", val3)
-
---GPIO32, TempSens
---val3 = adc.read(adc.ADC1, 4)
-val3 = ADCmeasure(4, 10)
-
-print("ADC Temp sens measure second run result:", val3)
-
-
---GPIO32, TempSens
---val3 = adc.read(adc.ADC1, 4)
-val3 = ADCmeasure(4, 10)
-
-print("ADC Temp sens measure third run result:", val3)
+print("ADC PTC Temperature sensor measure result:", val3)
 
 ptc_resistor_voltage = (val3 / 4095) * Vref6dB
 
@@ -221,7 +216,7 @@ V_out = V_out_mV / 1000
 
 --print("V_in =",V_in,"V  V_out =",V_out,"V  TempSens =",val3)
 
-if V_out_max_temp < V_out_mV then Voutctrl(12) end
+if V_out_max_temp < V_out then Voutctrl(12) end
 
 if V_in >= 13 and V_out_max_temp > V_out_mV then 
 
@@ -352,12 +347,12 @@ bin2hextable = {
 	["0111"] = "7",
 	["1000"] = "8",
 	["1001"] = "9",
-	["1010"] = "A",
-    ["1011"] = "B",
-    ["1100"] = "C",
-    ["1101"] = "D",
-    ["1110"] = "E",
-    ["1111"] = "F"
+        ["1010"] = "A",
+        ["1011"] = "B",
+        ["1100"] = "C",
+        ["1101"] = "D",
+        ["1110"] = "E",
+        ["1111"] = "F"
 	}
 
        
@@ -417,24 +412,14 @@ print("#########################################################################
        
 if  charge_state_float == nil then charge_state_float = charge_state end
 
-    
---[[ Handle the corner case when the router has spent time running without serial data from the controller.
--- Kickstart from charge state estimate, as soon as the controller is connected again.]]
-
-if (charge_state_float < (charge_state - 30)) then charge_state_float = charge_state
-end 
-       
 
 -- Sanity check of battery level gauge: Move slowly
 
-if charge_state > charge_state_float then charge_state = charge_state_float + 0.25 end
+if charge_state > charge_state_float then charge_state_float = charge_state_float + 0.1 end
 
-if charge_state < charge_state_float and V_out > 0 then charge_state = charge_state_float - 0.25 end
+if charge_state < charge_state_float and  V_out > 0 and V_out < 12.9 then charge_state_float = charge_state_float - 0.1 end
 
-charge_state_float = charge_state 
-
-charge_state_int = math.ceil(charge_state)
-
+charge_state_int = math.ceil(charge_state_float)
 
 
 -- if V_out >= (V_out_max_temp - 0.05) and V_in >= (V_oc * 0.95) and V_in > 16.00 then charge_status = "Fully charged" Bit_2 = 1 end
@@ -459,8 +444,7 @@ print(string.format("%04d-%02d-%02d %02d:%02d:%02d DST:%d", localTime["year"], l
 print("Local Time variable: ", localTime["hour"])
 
 
-
-if health_test_in_progress == 0 and localTime["hour"] == 17 and timestamp > 1569859000 then 
+if health_test_in_progress == 0 and localTime["hour"] == 22 and timestamp > 1569859000 then 
         print("Starting 6 hour discharge check") 
         health_test_in_progress = 1
         battery_gauge_start = charge_state_float - 0.5
