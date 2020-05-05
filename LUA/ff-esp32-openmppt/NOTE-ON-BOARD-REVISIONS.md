@@ -1,5 +1,5 @@
 If you are the owner of one of the few (four!) prototype boards (revision
-1.0), remove the comment dashes in **mp2.lua **in this section, so it looks like
+1.0), remove the comment dashes in **mp2.lua** in this section, so it looks like
 this: 
 
 	-- MPP range of FF-OpenMPPT-ESP32 v1.0
