@@ -36,6 +36,13 @@ adc.setup(adc.ADC1, 4, adc.ATTEN_11db)
 gpio.config( { gpio={14}, dir=gpio.OUT, pull=gpio.PULL_UP })
 dac.enable(dac.CHANNEL_1)
 
+dac1value = 0
+
+Voutctrlcounter = 0
+health_estimate = 100
+health_test_in_progress = false
+V_oc = 0
+
 
 Vref = 1100 --mV
 
@@ -57,6 +64,9 @@ else
 end
 
 pagestring = "mp2.lua not started yet."
+
+V_outctrltimer = tmr.create()
+V_outctrltimer:register(600, tmr.ALARM_AUTO, function() Voutctrl(1) end)
 
 require"mp2"
 
@@ -92,7 +102,6 @@ health_estimate = 100
 powersave = 0
 timestamp = 123456789
 firmware_type = "ESP_1A"
-health_test_in_progress = 0
 health_estimate = 100
 charge_state = 100
 if webkey == nil then webkey = "empty" end
@@ -404,12 +413,16 @@ time.settimezone("CEST-2")
 
 
 mppttimer = tmr.create()
-mppttimer:register(60000, tmr.ALARM_AUTO, function() dofile"mp2.lua" if autoreboot_disabled ~= 1 then nextreboot = nextreboot - 1 end
+mppttimer:register(15000, tmr.ALARM_AUTO, function() dofile"mp2.lua" if autoreboot_disabled ~= 1 then nextreboot = nextreboot - 1 end
 if autoreboot ~= 1 and nextreboot <= -1 then node.restart() end end)
 mppttimer:start()
 
 if mqtt_enabled == true or mqtt_enabled == true then
 mqtttimer = tmr.create()
-mqtttimer:register(65000, tmr.ALARM_AUTO, function() dofile"telemetry.lua" end)
+mqtttimer:register(65000, tmr.ALARM_AUTO, function() 
+                   if Voutctrlcounter > 0  then V_outctrltimer:stop() end 
+                   dofile"telemetry.lua" 
+                   if Voutctrlcounter > 0  then V_outctrltimer:start() end
+                  end)
 mqtttimer:start()
 end

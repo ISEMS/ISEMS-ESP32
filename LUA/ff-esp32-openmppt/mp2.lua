@@ -21,6 +21,7 @@
 
 
 
+
 -- IO14 GPIO = control Low-Voltage-Disconnect / external power output
 -- IO32 Temp Sense,  Channel 4
 -- IO34 V_in,  Channel 6
@@ -32,18 +33,25 @@
 -- Value: 8bit =  0 to 255
 
 -- MPP range of FF-OpenMPPT-ESP32 v1.0
-Vmpp_max = 23.8 
-Vmpp_min = 14.45
+-- Vmpp_max = 23.8 
+---Vmpp_min = 14.45
+
+
+-- MPP range of FF-OpenMPPT-ESP32 v1.1
+    Vmpp_max = 27.2
+    Vmpp_min = 13.25
 
 -- V_out_max and V_out_max_temp in mV
-V_out_max = 14200
-V_out_max_temp = 14200
-V_oc = 0
-Vcc = 3.045
+V_out_max = 14700
+V_out_max_temp = 14700
+-- V_oc = 0
+Vcc = 3.0045
 ptc_series_resistance_R17 = 2200
 low_voltage_disconnect = 11.90
 
+timestamp = time.get()
 
+if Voutctrlcounter > 0  then V_outctrltimer:stop()  end
 
 function ADCmeasure (adcchannel, number_of_runs, result) 
     local result = 0
@@ -62,28 +70,37 @@ function ADCmeasure (adcchannel, number_of_runs, result)
 result = value2 / number_of_runs
 result = math.floor(result)
 
-print("ADC channel", adcchannel, " result value (12 bit):", result)
+--print("ADC channel", adcchannel, " result value (12 bit):", result)
    
 return result
 end
 
-function Voutctrl (number_of_steps)
+function Voutctrl(number_of_steps)
     
     if dac1value == nil then number_of_steps = 0  end 
     
-    print("### Voutctrl active ###\n", "V_out_max_temp:", V_out_max_temp, "V_out:", V_out)
+    --print("### Voutctrl active ###\n", "V_out_max_temp:", V_out_max_temp, "V_out:", V_out, "dac1value =", dac1value, "\nnumber_of_steps:", number_of_steps, "Voutctrlcounter =", Voutctrlcounter)
+    
+    print("# Voutctrl dac1value =", dac1value)
+    
     while number_of_steps > 0 do 
             val2 = ADCmeasure(5, 3)
             -- 0.0625 ratio of Voltage divider 1k/15k
             V_out_mV = ((val2 / 4095) * Vref) / 0.0625
             V_out_mV = math.ceil(V_out_mV)
             V_out = V_out_mV / 1000 
-            print("V_out_mV:", V_out_mV, "V_out:", V_out, "V_out_max_temp:", V_out_max_temp)   
+            --print("V_out:", V_out, "V_out_max_temp:", V_out_max_temp)    
             
-            if (V_out_max_temp + 0.05) < V_out then 
+            if (V_out_max_temp + 0.03) < V_out then 
             dac1value = dac1value + 1
-            print("Increasing dac1value =", dac1value)
-            number_of_steps = number_of_steps - 1
+            --print("Increasing dac1value =", dac1value)
+            --number_of_steps = number_of_steps - 2
+            end
+            
+            if (V_out_max_temp - 0.03) > V_out and dac1value > 0 then 
+            dac1value = dac1value - 1
+            --print("Decreasing dac1value =", dac1value)
+            --number_of_steps = number_of_steps - 1
             end
             
             if dac1value > 254 then dac1value = 254
@@ -91,14 +108,19 @@ function Voutctrl (number_of_steps)
             number_of_steps = 0
             end
             
-            if (V_out_max_temp + 0.05) >= V_out then number_of_steps = 0 end
-            print("Setting PWM to ", dac1value)
+            number_of_steps = number_of_steps - 1
+            
             dac.write(dac.CHANNEL_1, dac1value)
             end
             
+            Voutctrlcounter = Voutctrlcounter - 1 
     end
 
 
+
+
+    
+    
 
 --GPIO32, TempSens
 --val3 = adc.read(adc.ADC1, 4)
@@ -120,7 +142,7 @@ if val3 < 4000 then
 tempsens_missing = 0
     
 adc.setup(adc.ADC1, 4, adc.ATTEN_6db)
-print("Temperature sensor connected")
+-- print("Temperature sensor connected")
 
 -- Vref11dB = Vref * 0.0034
 Vref6dB = Vref * 0.002
@@ -129,13 +151,13 @@ Vref6dB = Vref * 0.002
 --val3 = adc.read(adc.ADC1, 4)
 val3 = ADCmeasure(4, 15)
 
-print("ADC PTC Temperature sensor measure result:", val3)
+-- print("ADC PTC Temperature sensor measure result:", val3)
 
 ptc_resistor_voltage = (val3 / 4095) * Vref6dB
 
 ptc_resistor_voltage = ptc_resistor_voltage / 1.112
 
-print("PTC resistor Voltage =", ptc_resistor_voltage)
+-- print("PTC resistor Voltage =", ptc_resistor_voltage)
 
 ptc_resistor_voltage_mV = ptc_resistor_voltage * 1000
 
@@ -145,7 +167,7 @@ ptc_resistance = ptc_resistor_voltage / ptc_resistor_current
 
 -- KTY 81-210 is not very accurate. Best accuracy at 40 degrees Celsius
 
-print("PTC resistance =", ptc_resistance)
+-- print("PTC resistance =", ptc_resistance)
 
 -- battery_temperature = ((ptc_resistance - 1247) / 14.15) - 30 
 
@@ -170,7 +192,7 @@ if ptc_resistance < 2000 then
      Correction factor 5 mV per cell for one degree Celsius 
      12 V lead acid type has 6 cells]]
 
-print ("Resistance of PTC =", ptc_resistance, "Battery_temperature =", battery_temperature) 
+-- print ("Resistance of PTC =", ptc_resistance, "Battery_temperature =", battery_temperature) 
 
 adc.setup(adc.ADC1, 4, adc.ATTEN_11db)
 
@@ -199,7 +221,7 @@ val1 = ADCmeasure(6, 15)
 -- 0.03571 ratio of Voltage divider 1k/27k
 V_in = ((val1 / 4095) * Vref) / 0.035714
 -- Correction factor 
-V_in = (V_in * 1.05) + 300
+V_in = (V_in * 1.17) + 300
 V_in = math.ceil(V_in) 
 V_in = V_in / 1000
 
@@ -212,26 +234,37 @@ V_out_mV = ((val2 / 4095) * Vref) / 0.0625
 V_out_mV = math.ceil(V_out_mV)
 V_out = V_out_mV / 1000
 
---print("V_in =",val1,"V_out =",val2," TempSens =",val3)
 
---print("V_in =",V_in,"V  V_out =",V_out,"V  TempSens =",val3)
+if V_out_max_temp + 0.05 < V_out then Voutctrlcounter = 45000 end
 
-if V_out_max_temp < V_out then Voutctrl(12) end
+if V_out_max_temp - 0.3 > V_out then Voutctrlcounter = 0 end
 
-if V_in >= 13 and V_out_max_temp > V_out_mV then 
+if V_in >= 13 and V_out_max_temp > V_out and Voutctrlcounter <= 0 then 
 
 dac1value= 254
 dac.write(dac.CHANNEL_1, dac1value)
-print("Setting PWM to ", dac1value)
-print("Pre-Run: Measure V_in idle") 
-val1 = ADCmeasure(6, 40)
-print(val1)
-print("Measure V_in idle") 
-val1 = ADCmeasure(6, 10)
-print(val1)
+print("MPPT - Setting PWM to ", dac1value)
+
+
+
+    count_dac = 1
+    compare_dac = 0
+    while count_dac < 20 do 
+    print("MPPT - Measure V_in idle - run #", count_dac) 
+    val1 = ADCmeasure(6, 50)
+    if compare_dac == 0 then compare_dac = val1 end
+    if count_dac >= 2 and val1 <= compare_dac then count_dac = 20 end 
+    if count_dac >= 2 and val1 > compare_dac then 
+        compare_dac = val1 end
+        print("MPPT - Previous ADC measurement value:", compare_dac, "Latest ADC measurement value:", val1)
+        count_dac =  count_dac + 1
+    end
+
 
 V_oc = ((val1 / 4095) * (Vref / 0.03571))
 V_oc = math.ceil(V_oc)
+print("V_oc without considering Vschottky loss=", V_oc)
+-- V_oc = (V_oc / 1000) + 0.3
 v_mpp_estimate = V_oc / 1.24
 v_mpp_estimate = math.floor(v_mpp_estimate)
 v_mpp_estimate = v_mpp_estimate / 1000
@@ -248,9 +281,10 @@ print("Setting PWM to ", dac1value)
 
 end
 
+
 if V_in < V_out then 
     
-    dac1value = 0
+    dac1value = 80
     dac.write(dac.CHANNEL_1, dac1value)
 
 end
@@ -281,22 +315,24 @@ V_out = (val2 / 4095) * (Vref / 0.0625)
 V_out = math.ceil(V_out)
 V_out = V_out / 1000
 
-print("Measure V_in") 
+--print("Measure V_in") 
 val1 = ADCmeasure(6, 10)
 print(val1)
 
 V_in = ((val1 / 4095) * (Vref / 0.03571))
-V_in = (V_in * 1.05) + 300
+V_in = (V_in * 1.17) + 300
 V_in = math.ceil(V_in)
 V_in = V_in / 1000
 
-print("V_in =",val1,"V_out =",val2," TempSens =",val3)
+-- print("V_in =",val1,"V_out =",val2," TempSens =",val3)
 
-print("Vref =", Vref, "V_oc =",V_oc, "V_in =",V_in,"V  V_out =",V_out,"V  TempSens =",val3, "Battery temperature =", battery_temperature)
+--print("Vref =", Vref, "V_oc =",V_oc, "V_in =",V_in,"V  V_out =",V_out,"V  TempSens =",val3, "Battery temperature =", battery_temperature)
        
-print("Resistor Voltage =", ptc_resistor_voltage)
+-- print("Resistor Voltage =", ptc_resistor_voltage)
 
-print("PTC resistance =", ptc_resistance)
+-- print("PTC resistance =", ptc_resistance)
+
+
 
 
 -- #################################################################################################
@@ -310,15 +346,12 @@ print(nodeid)
 
 packetrev = "1"
 counter_serial_loop = 0
-health_estimate = 100
 powersave = 0
-timestamp = 123456789
 firmware_type = "FF-ESP-1A"
 pagestring = "HTTP/1.0 200 OK\r\nContent-Type: text/html\r\n\r\n<h1>Independent Solar Energy Mesh</h1><br><h2>Status of " .. nodeid .. "(local node)</h2><br> No data yet. Come back in a minute."
 csvlog = nodeid .. ";1;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0;0"
 quickstart_threshold = 14
-health_test_in_progress = 0
-health_estimate = 100
+
 
 charge_state = 0
 
@@ -347,18 +380,19 @@ bin2hextable = {
 	["0111"] = "7",
 	["1000"] = "8",
 	["1001"] = "9",
-        ["1010"] = "A",
-        ["1011"] = "B",
-        ["1100"] = "C",
-        ["1101"] = "D",
-        ["1110"] = "E",
-        ["1111"] = "F"
+	["1010"] = "A",
+	["1011"] = "B",
+	["1100"] = "C",
+	["1101"] = "D",
+	["1110"] = "E",
+	["1111"] = "F"
 	}
 
        
-print("###########################################################################################")
-print("V_in:", V_in, "V_out:", V_out, "V_out_max:", V_out_max, "V_out_max_temp:", V_out_max_temp)
-print("###########################################################################################")
+print("#################################################################################################")
+print("V_in (mpp):", V_in, "V_out:", V_out, "V_out_max:", V_out_max, "V_out_max_temp:", V_out_max_temp)
+print("V_oc=", V_oc, "PTC resistance=", ptc_resistance, "Battery_temperature =", battery_temperature)
+print("#################################################################################################")
 
         charge_status = "Unknown"
        
@@ -377,8 +411,8 @@ print("#########################################################################
 -- Charge state estimate
 -- To estimate charge state when discharging is relatively simple, due to low and relatively constant load.
        
-       --print("we are at charge state estimate")
-       print("V_in:", V_in, "V_out:", V_out)
+       -- print("we are at charge state estimate")
+       -- print("V_in:", V_in, "V_out:", V_out)
         
         if V_in < V_out and V_out > 12.60 then charge_state = (95 + ((V_out - 12.6) * 20)) end 
 
@@ -440,33 +474,32 @@ if charge_state_int < 0 then charge_state_int = 0 end
        
 localTime = time.getlocal()
 print(string.format("%04d-%02d-%02d %02d:%02d:%02d DST:%d", localTime["year"], localTime["mon"], localTime["day"], localTime["hour"], localTime["min"], localTime["sec"], localTime["dst"]))
-       
-print("Local Time variable: ", localTime["hour"])
+
+print("health_test_in_progress:", health_test_in_progress, "timestamp:", timestamp)
 
 
-if health_test_in_progress == 0 and localTime["hour"] == 22 and timestamp > 1569859000 then 
-        print("Starting 6 hour discharge check") 
-        health_test_in_progress = 1
+if health_test_in_progress == false and localTime["hour"] == 22 and timestamp > 1569859000 then 
+        print("Starting 6 hour discharge check")
+        health_test_in_progress = true
         battery_gauge_start = charge_state_float - 0.5
-        battery_health_timer = tmr.create()
-        --battery_health_timer:register(86400000, tmr.ALARM_SINGLE, function() health_test_in_progress = 0  battery_gauge_stop = charge_state_float 
-         battery_health_timer:register(86000, tmr.ALARM_SINGLE, function() health_test_in_progress = 0  battery_gauge_stop = charge_state_float                      
-        -- Take reading tolerance into account. Better err on the positive side, particularly at weak loads.
-        -- 0.5% error is quite humble. It might be necessary to increase this value to avoid false alarms about broken batteries.
+end
 
+if health_test_in_progress == true and localTime["hour"] == 4 then
+        print("Finishing 6 hour discharge check")
+        health_test_in_progress = false
+        battery_gauge_stop = charge_state_float                      
         if battery_gauge_start > 100 then battery_gauge_start = 100 end
 
-        if battery_gauge_start >0 and battery_gauge_stop > 0 and average_power_consumption > 0 then health_estimate = (((6 * average_power_consumption) / (((battery_gauge_start - battery_gauge_stop) / 100) * rated_batt_capacity)) * 100) end
+        if battery_gauge_start > 0 and battery_gauge_stop > 0 and average_power_consumption > 0 then health_estimate = (((6 * average_power_consumption) / (((battery_gauge_start - battery_gauge_stop) / 100) * rated_batt_capacity)) * 100) end
 
-
-        print ("Battery health estimate: ", health_estimate)
+        print("battery_gauge_start:", battery_gauge_start, "battery_gauge_stop:", battery_gauge_stop, "average_power_consumption:", average_power_consumption, "rated_batt_capacity:", rated_batt_capacity)
+                                     
+        print("Battery health estimate: ", health_estimate)
 
         health_estimate = math.ceil(health_estimate)
 
         if health_estimate > 100 then health_estimate = 100 end
 
-        end)
-        battery_health_timer:start()
 end
 
        
@@ -481,9 +514,9 @@ storage_charge_ratio =  (rated_batt_capacity * (health_estimate / 100)) / (solar
 
 system_status = " "
 
-if (storage_charge_ratio > critical_storage_charge_ratio and charge_state > 50) then system_status = "Healthy. " Bit_3 = 1 end
+if (storage_charge_ratio > critical_storage_charge_ratio and charge_state_int > 50) then system_status = "Healthy. " Bit_3 = 1 end
 
-if (storage_charge_ratio > critical_storage_charge_ratio and charge_state <= 50) then system_status = "Warning: Battery level low. Increased battery wear. "  Bit_4 = 1 end
+if (storage_charge_ratio > critical_storage_charge_ratio and charge_state_int <= 50) then system_status = "Warning: Battery level low. Increased battery wear. "  Bit_4 = 1 end
 
 if (storage_charge_ratio <= critical_storage_charge_ratio) then system_status = system_status .. "Warning: Energy storage capacity too small. Check battery size and/or wear. "  Bit_5 = 1 end
 
@@ -507,26 +540,24 @@ bit_string_1 = (Bit_4 .. Bit_5 .. Bit_6 .. Bit_7)
 bit_string_2 = (Bit_8 .. Bit_9 .. Bit_10 .. Bit_11)
 
 
-print("bitstrings: ", bit_string_0, bit_string_1, bit_string_2)
+-- print("bitstrings: ", bit_string_0, bit_string_1, bit_string_2)
 
 statuscode = (bin2hextable[bit_string_0] .. bin2hextable[bit_string_1] .. bin2hextable[bit_string_2])
 -- statuscode_json = ("0x" .. statuscode)
 
-print("statuscode =", statuscode)
+-- print("statuscode =", statuscode)
 
 freeRAM = node.heap()
 
 -- CSV payload
 
-timestamp = time.get()
+
 
 -- print("Creating csvlog.")
-       
--- print(nodeid, packetrev, timestamp, firmware_type, nextreboot, powersave, V_oc, V_in, V_out, charge_state_int, health_estimate, battery_temperature, low_voltage_disconnect, V_out_max_temp, rated_batt_capacity, solar_module_capacity, lat, long, statuscode)
       
 ffopenmppt_log = nodeid .. ";" .. packetrev .. ";" .. timestamp .. ";" .. firmware_type .. ";" .. nextreboot .. ";" .. powersave .. ";".. V_oc .. ";".. V_in .. ";".. V_out .. ";".. charge_state_int .. ";" .. health_estimate .. ";".. battery_temperature .. ";".. low_voltage_disconnect .. ";".. V_out_max_temp .. ";" .. rated_batt_capacity .. ";".. solar_module_capacity .. ";".. lat .. ";" .. long .. ";" ..  statuscode
 
-print("CSV payload:", ffopenmppt_log)
+-- print("CSV payload:", ffopenmppt_log)
        
 if ffopenmppt_log5 ~= nil then 
        ffopenmppt_log1 = ffopenmppt_log2
@@ -593,6 +624,6 @@ node_uptime = math.floor((node.uptime() / 1000000))
         pagestring = pagestring .. "<br>Uptime in seconds: " .. node_uptime   
         pagestring = pagestring .. "</h3> <h2> <a href=\"help.html\">Howto</a></h2>"
        
-print(pagestring)
+-- print(pagestring)
 
-
+if Voutctrlcounter > 0  then V_outctrltimer:start()  end
